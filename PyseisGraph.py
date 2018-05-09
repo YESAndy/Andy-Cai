@@ -33,16 +33,7 @@ hit_switch=True
 class VibraGraph:
     
  
-    def showImg(self,data,offset,times):
-        fig,ax=plt.subplots()
-        x=VibraGraph()
 
-        for i in range(1,81):
-            testdata1=pd.to_numeric(data[str(i)])+offset
-            x.plotvibra(testdata1,times,ax)
-            x.fillblank(testdata1,times,offset,ax)
-            offset=offset+3000
-        return fig    
 #    step,number=2048,number*step+1    
     def add_xvibra(self,xvibra):
         return xvibra
@@ -124,10 +115,21 @@ class hit_condition:
         else:
              hit_switch=True
         
-        
+     
 if __name__=='__main__':
     
     hit=hit_condition()
+    fig,ax=plt.subplots()
+    x=VibraGraph()
+
+    for i in range(1,81):
+        testdata1=pd.to_numeric(data[str(i)])+offset
+        x.plotvibra(testdata1,times,ax)
+        x.fillblank(testdata1,times,offset,ax)
+        offset=offset+3000
+
+
+
 #    initialize window
     window=tk.Tk()
     window.title('vibrationgraphtest')
@@ -148,7 +150,7 @@ if __name__=='__main__':
 #   set button for shortenning the pic
     ShortenVibra=tk.Button(window,text='shortenvibra',height=2,width=8,command=hit.hit_shorten)
     ShortenVibra.pack()
-    fig=hit.hit_showimg
+    
 #set the canvas
     canvas=FigureCanvasTkAgg(fig,master=window)
     canvas.show()
