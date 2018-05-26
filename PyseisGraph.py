@@ -12,17 +12,17 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import matplotlib
 
-data=pd.read_csv(r'C:\Users\ANDY\Desktop\L0207.csv')
+data=pd.read_csv(r'C:\Users\ANDY\Desktop\L02072.csv')
 time=[]
+step=1
 
 for i in data['Time(ms)']:
     time.append(i)
 del data['Time(ms)']
-
-offset=0
-times=np.arange(1,2049)  
-step=1        
+          
 hit_fore=True
 hit_back=True
 hit_show=False
@@ -32,33 +32,51 @@ hit_switch=True
 
 class VibraGraph:
     
- 
-
-#    step,number=2048,number*step+1    
-    def add_xvibra(self,xvibra):
+    
+    def __init__(self):
+        self.times=np.linspace(1,3000,1024)
+        self.fig,self.ax=plt.subplots()
+        
+#    step,number=2048,number*step+1 
+    
+    def _xvibra(self,raw_data,column):
+        xvibra=[]
+        testdata2=raw_data(str(column))
+        for i in range(1023):
+            xvibra.append(testdata2[i])
+            xvibra.append((testdata2[i]+testdata2[i+1])/2)
+        xvibra.append(testdata2[1023])
+        
         return xvibra
     
     def minor_xvibra(self):
         pass
     
-    def switchStep(self,step):
-        time=np.arange(1,step*2048+1,step)
-        return time
         
-    def plotvibra(self,xvibra,time,ax):
-        ax.plot(xvibra,time,'k')
+    def plotvibra(self,xvibra):
+        self.ax.plot(xvibra,self.times,'k')
         
-    def fillblank(self,xvibra,time,offset,ax):
-        ax.fill_betweenx(time,offset,xvibra,where=(xvibra>offset),color='k')
+    def fillblank(self,xvibra,offset):
+        self.ax.fill_betweenx(self.times,offset,xvibra,where=(xvibra>offset),color='k')
         
-    def set_xvibralim(self,left,right,ax):
-        ax.set_xlim(left,right)
-    
+    def set_xvibralim(self,left,right):
+        self.ax.set_xlim(left,right)
+        
+    def showImg():
+        
+#   clear the former image
+        offset=100
 
-        
+       
+        for i in range(1,81):
+            testdata1=pd.to_numeric(data[str(i)])+offset
+            self.plotvibra(testdata1)
+            self.fillblank(testdata1,offset)
+            offset=offset+1500
     
     
 class hit_condition:
+    
     
     def hit_foremove(self):
         global hit_fore
@@ -74,14 +92,16 @@ class hit_condition:
         x=VibraGraph()
         if hit_back == True:
             hit_back=False
-            x.minor_xvibra
+            
         else:
              hit_back=True
 
     def hit_elongate(self):
-        global hit_elong,hit_show
+        global hit_elong,step
+        x=VibraGraph()
         if hit_elong == True:
-            hit_show=True
+            x=VibraGraph()
+            x.showImg()
             hit_elong=False
         else:
              hit_elong=True
@@ -90,22 +110,12 @@ class hit_condition:
         global hit_short,step
         x=VibraGraph()
         if hit_short == True:
-            if step>0:
-                step=step-1
-                x.switchStep(step)
-            else:
-                pass
+            if step>1:
+                step-=1
+                x.showImg()
+            
         else:
              hit_short=True
-
-    def hit_showimg(self):
-        global hit_show,step,times
-        x=VibraGraph()
-        if hit_show == True:
-            step=step+200
-            times=x.switchStep(step)
-            return x.showImg(data,0,times)
-            hit_show=False
              
 
     def hit_switchimg(self):
@@ -114,46 +124,64 @@ class hit_condition:
             hit_switch=False
         else:
              hit_switch=True
+             
+             
         
      
 if __name__=='__main__':
     
+    matplotlib.use('TkAgg')
     hit=hit_condition()
-    fig,ax=plt.subplots()
     x=VibraGraph()
-
-    for i in range(1,81):
-        testdata1=pd.to_numeric(data[str(i)])+offset
-        x.plotvibra(testdata1,times,ax)
-        x.fillblank(testdata1,times,offset,ax)
-        offset=offset+3000
-
-
-
+    x.showImg()
+    
 #    initialize window
     window=tk.Tk()
     window.title('vibrationgraphtest')
-
     
-#   set the first button, show the image
-    ShowPlot=tk.Button(window,text='showimage',height=2,width=8,command=hit.hit_showimg)
-    ShowPlot.pack()
-#    set button for adding new points
-    ForeMove=tk.Button(window,text='foremove',height=2,width=8,command=hit.hit_foremove)
-    ForeMove.pack()
-#    set button for backward
-    BackMove=tk.Button(window,text='backmove',height=2,width=8,command=hit.hit_backmove)
-    BackMove.pack()
-#    set button for elongating the pic
-    ElongVibra=tk.Button(window,text='elongvibra',height=2,width=8,command=hit.hit_elongate)
-    ElongVibra.pack()
-#   set button for shortenning the pic
-    ShortenVibra=tk.Button(window,text='shortenvibra',height=2,width=8,command=hit.hit_shorten)
-    ShortenVibra.pack()
+    step_var=tk.IntVar()
+    
+    frame=tk.Frame(window)
+    frame.pack()
+    
+    frame_left=tk.Frame(frame)
+    frame_right=tk.Frame(frame)
+    frame_left.pack(side='left')
+    frame_right.pack(side='right')
+    
+    entry_elong=tk.Entry(frame_right,text=step_var)
+    
     
 #set the canvas
-    canvas=FigureCanvasTkAgg(fig,master=window)
-    canvas.show()
-    canvas.get_tk_widget().pack(side=tk.TOP,fill=tk.BOTH,expand=1)
+    
+    canvas=tk.Canvas(frame_left)
+    canvas.grid(row=0,column=0,sticky="news")
+    aggfig=FigureCanvasTkAgg(x.fig,canvas)
+#    link the scrollbar to the canvas
+    scrollcanvas=tk.Scrollbar(frame_left,orient="vertical")
+    scrollcanvas.grid(row=0,column=1,sticky='ns')
+    canvas.configure(yscrollcommand=scrollcanvas.set)
+    
+    canvas.config(scrollregion=canvas.bbox("all"))
+    aggfig.show()
+#   set the first button, show the image
+#    ShowPlot=tk.Button(frame_right,text='showimage',height=2,width=9,command=showImg())
+#    ShowPlot.pack()
+#    set button for adding new points
+    ForeMove=tk.Button(frame_right,text='foremove',height=2,width=9,command=hit.hit_foremove)
+    ForeMove.pack()
+#    set button for backward
+    BackMove=tk.Button(frame_right,text='backmove',height=2,width=9,command=hit.hit_backmove)
+    BackMove.pack()
+#    set button for elongating the pic
+    ElongVibra=tk.Button(frame_right,text='elongvibra',height=2,width=9,command=hit.hit_elongate)
+    ElongVibra.pack()
+#   set button for shortenning the pic
+    ShortenVibra=tk.Button(frame_right,text='shortenvibra',height=2,width=9,command=hit.hit_shorten)
+    ShortenVibra.pack()
+    
+    
+
+
     
     window.mainloop()    
